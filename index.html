@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Countdown Tracker with Memories</title>
+    <style>
+      :root {
+        --bg: #f9fafb;
+        --card: #ffffff;
+        --accent: #ec4899;
+        --text: #111827;
+        --muted: #6b7280;
+        --radius: 16px;
+        --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .container {
+        background: var(--card);
+        padding: 24px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        text-align: center;
+        max-width: 500px;
+        width: 100%;
+      }
+      h1 {
+        margin: 0 0 16px 0;
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .date-input,
+      .memory-input {
+        margin-bottom: 20px;
+        text-align: left;
+      }
+      input[type="date"],
+      input[type="color"],
+      input[type="text"],
+      textarea {
+        padding: 10px;
+        border-radius: var(--radius);
+        border: 1px solid #e5e7eb;
+        font-size: 15px;
+        margin-top: 6px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      button {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-size: 14px;
+        margin-top: 10px;
+      }
+      button:hover {
+        background: #db2777;
+      }
+      .result {
+        margin-top: 20px;
+        font-size: 18px;
+        font-weight: 500;
+      }
+      .time {
+        margin-top: 10px;
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .customize {
+        margin-top: 24px;
+        text-align: left;
+      }
+      .memory-list {
+        margin-top: 20px;
+        text-align: left;
+      }
+      .memory-item {
+        background: #fef2f7;
+        padding: 10px;
+        border-radius: var(--radius);
+        margin-bottom: 10px;
+        box-shadow: var(--shadow);
+      }
+      .memory-item .mem-date {
+        font-size: 13px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>💕 Relationship Countdown</h1>
+      <div class="date-input">
+        <label for="startDate">When did you first get together?</label><br />
+        <input type="date" id="startDate" />
+        <button onclick="saveDate()">Save</button>
+      </div>
+      <div class="result" id="result">Please select a start date.</div>
+      <div class="time" id="time"></div>
+
+      <div class="memory-input">
+        <h3>Add a Memory / Message</h3>
+        <input type="text" id="memoryText" placeholder="Memory or message..." />
+        <input type="date" id="memoryDate" />
+        <button onclick="addMemory()">Add Memory</button>
+      </div>
+
+      <div class="memory-list" id="memoryList">
+        <h3>Memories</h3>
+      </div>
+
+      <div class="customize">
+        <h3>Customize</h3>
+        <label>Pick Accent Color:</label><br />
+        <input type="color" id="accentColor" /><br />
+        <label>Pick Background Color:</label><br />
+        <input type="color" id="bgColor" />
+      </div>
+    </div>
+
+    <script>
+      function saveDate() {
+        const date = document.getElementById("startDate").value;
+        if (date) {
+          localStorage.setItem("relationshipStart", date);
+          updateCountdown();
+        }
+      }
+
+      function updateCountdown() {
+        const startDate = localStorage.getItem("relationshipStart");
+        if (!startDate) return;
+
+        const start = new Date(startDate);
+        const now = new Date();
+        const diffMs = now - start;
+
+        if (diffMs < 0) return;
+
+        const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const years = Math.floor(days / 365);
+        const months = Math.floor((days % 365) / 30);
+        const weeks = Math.floor(((days % 365) % 30) / 7);
+        const remDays = days % 7;
+
+        document.getElementById(
+          "result"
+        ).textContent = `You have been together since ${start.toDateString()}`;
+        document.getElementById(
+          "time"
+        ).textContent = `${years} years, ${months} months, ${weeks} weeks, ${remDays} days`;
+      }
+
+      function addMemory() {
+        const text = document.getElementById("memoryText").value.trim();
+        const date = document.getElementById("memoryDate").value;
+        if (!text || !date) return;
+        const memories = JSON.parse(localStorage.getItem("memories") || "[]");
+        memories.push({ text, date });
+        localStorage.setItem("memories", JSON.stringify(memories));
+        renderMemories();
+        document.getElementById("memoryText").value = "";
+        document.getElementById("memoryDate").value = "";
+      }
+
+      function renderMemories() {
+        const memoryList = document.getElementById("memoryList");
+        const memories = JSON.parse(localStorage.getItem("memories") || "[]");
+        memoryList.innerHTML =
+          "<h3>Memories</h3>" +
+          memories
+            .map(
+              (mem) => `
+        <div class='memory-item'>
+          <div>${mem.text}</div>
+          <div class='mem-date'>${new Date(mem.date).toDateString()}</div>
+        </div>`
+            )
+            .join("");
+      }
+
+      document.getElementById("accentColor").addEventListener("input", (e) => {
+        document.documentElement.style.setProperty("--accent", e.target.value);
+        localStorage.setItem("accentColor", e.target.value);
+      });
+
+      document.getElementById("bgColor").addEventListener("input", (e) => {
+        document.documentElement.style.setProperty("--bg", e.target.value);
+        localStorage.setItem("bgColor", e.target.value);
+        document.body.style.background = e.target.value;
+      });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        if (localStorage.getItem("relationshipStart")) {
+          document.getElementById("startDate").value =
+            localStorage.getItem("relationshipStart");
+          updateCountdown();
+        }
+        if (localStorage.getItem("accentColor")) {
+          document.documentElement.style.setProperty(
+            "--accent",
+            localStorage.getItem("accentColor")
+          );
+          document.getElementById("accentColor").value =
+            localStorage.getItem("accentColor");
+        }
+        if (localStorage.getItem("bgColor")) {
+          document.documentElement.style.setProperty(
+            "--bg",
+            localStorage.getItem("bgColor")
+          );
+          document.body.style.background = localStorage.getItem("bgColor");
+          document.getElementById("bgColor").value =
+            localStorage.getItem("bgColor");
+        }
+        renderMemories();
+      });
+    </script>
+  </body>
+</html>
